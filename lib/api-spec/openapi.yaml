@@ -1,0 +1,533 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Orizon AI Startup Co-Founder API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: projects
+    description: Startup project operations
+  - name: analyses
+    description: AI analysis operations
+  - name: users
+    description: User profile operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List all startup projects for current user
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a new startup project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "401":
+          description: Unauthorized
+
+  /projects/{projectId}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get a specific startup project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a startup project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete a startup project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /projects/{projectId}/analyses:
+    get:
+      operationId: listAnalyses
+      tags: [analyses]
+      summary: List all analyses for a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Analysis"
+    post:
+      operationId: createAnalysis
+      tags: [analyses]
+      summary: Trigger AI analysis for a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalysisInput"
+      responses:
+        "201":
+          description: Analysis started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+        "404":
+          description: Project not found
+
+  /projects/{projectId}/analyses/{analysisId}:
+    get:
+      operationId: getAnalysis
+      tags: [analyses]
+      summary: Get a specific analysis result
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+        "404":
+          description: Not found
+
+  /projects/{projectId}/analyses/{analysisId}/improve:
+    post:
+      operationId: improveAnalysis
+      tags: [analyses]
+      summary: Generate an improved version of the startup idea
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Improved analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+        "404":
+          description: Not found
+
+  /projects/{projectId}/analyses/{analysisId}/report:
+    get:
+      operationId: getAnalysisReport
+      tags: [analyses]
+      summary: Get PDF report data for an analysis
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportData"
+        "404":
+          description: Not found
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [projects]
+      summary: Get dashboard statistics for the current user
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
+          description: Unauthorized
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    UserProfile:
+      type: object
+      required: [id, clerkId, email, createdAt]
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+        preferredLanguage:
+          type: string
+          enum: [en, ar]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        preferredLanguage:
+          type: string
+          enum: [en, ar]
+
+    Project:
+      type: object
+      required: [id, userId, title, ideaSummary, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        ideaSummary:
+          type: string
+        industry:
+          type: ["string", "null"]
+        targetMarket:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [draft, analyzing, complete, failed]
+        latestAnalysisId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProjectInput:
+      type: object
+      required: [title, ideaSummary]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        ideaSummary:
+          type: string
+          minLength: 10
+        industry:
+          type: string
+        targetMarket:
+          type: string
+
+    ProjectUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        ideaSummary:
+          type: string
+          minLength: 10
+        industry:
+          type: string
+        targetMarket:
+          type: string
+        status:
+          type: string
+          enum: [draft, analyzing, complete, failed]
+
+    ScoreBreakdown:
+      type: object
+      required: [ventureScore, innovationScore, marketScore, riskScore, investmentReadiness, revenuePotential]
+      properties:
+        ventureScore:
+          type: integer
+        innovationScore:
+          type: integer
+        marketScore:
+          type: integer
+        riskScore:
+          type: integer
+        investmentReadiness:
+          type: integer
+        revenuePotential:
+          type: integer
+        ventureScoreExplanation:
+          type: ["string", "null"]
+        innovationScoreExplanation:
+          type: ["string", "null"]
+        marketScoreExplanation:
+          type: ["string", "null"]
+        riskScoreExplanation:
+          type: ["string", "null"]
+        investmentReadinessExplanation:
+          type: ["string", "null"]
+        revenuePotentialExplanation:
+          type: ["string", "null"]
+
+    SwotAnalysis:
+      type: object
+      required: [strengths, weaknesses, opportunities, threats]
+      properties:
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        opportunities:
+          type: array
+          items:
+            type: string
+        threats:
+          type: array
+          items:
+            type: string
+
+    Analysis:
+      type: object
+      required: [id, projectId, type, status, createdAt]
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        type:
+          type: string
+          enum: [initial, improved]
+        status:
+          type: string
+          enum: [pending, processing, complete, failed]
+        executiveSummary:
+          type: ["string", "null"]
+        ideaSummaryEnhanced:
+          type: ["string", "null"]
+        swotAnalysis:
+          $ref: "#/components/schemas/SwotAnalysis"
+        customerPersona:
+          type: ["string", "null"]
+        businessModel:
+          type: ["string", "null"]
+        marketOpportunity:
+          type: ["string", "null"]
+        revenueModel:
+          type: ["string", "null"]
+        riskAnalysis:
+          type: ["string", "null"]
+        competitorAnalysis:
+          type: ["string", "null"]
+        pricingSuggestions:
+          type: ["string", "null"]
+        goToMarketStrategy:
+          type: ["string", "null"]
+        startupRoadmap:
+          type: ["string", "null"]
+        scores:
+          $ref: "#/components/schemas/ScoreBreakdown"
+        weaknessesExplanation:
+          type: ["string", "null"]
+        improvementSuggestions:
+          type: ["string", "null"]
+        parentAnalysisId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AnalysisInput:
+      type: object
+      properties:
+        language:
+          type: string
+          enum: [en, ar]
+          default: en
+
+    DashboardStats:
+      type: object
+      required: [totalProjects, completedAnalyses, avgVentureScore, recentProjects]
+      properties:
+        totalProjects:
+          type: integer
+        completedAnalyses:
+          type: integer
+        avgVentureScore:
+          type: ["number", "null"]
+        recentProjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+
+    ReportData:
+      type: object
+      required: [project, analysis]
+      properties:
+        project:
+          $ref: "#/components/schemas/Project"
+        analysis:
+          $ref: "#/components/schemas/Analysis"

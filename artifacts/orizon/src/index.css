@@ -1,0 +1,547 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300&display=swap');
+
+/* ── Global overflow guard — no horizontal scroll ever ── */
+html, body { overflow-x: hidden; max-width: 100%; }
+* { min-width: 0; box-sizing: border-box; }
+
+/* ── Print / Export PDF ──────────────────────────────────────────────────── */
+@media print {
+
+  /* 1. Force full-fidelity color — preserves dark backgrounds and gold */
+  html, body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: #07070C !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 14mm;
+  }
+
+  /* 2. Hide all screen-only UI */
+  .no-pdf,
+  header,
+  nav,
+  aside {
+    display: none !important;
+  }
+
+  /* 3. Fix layout for print — remove fixed/sticky, remove header offset */
+  .fixed, .sticky, [style*="position: sticky"], [style*="position: fixed"] {
+    position: static !important;
+  }
+  main {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* 4. Strip backdrop-filter (not printable; would cause blank panels) */
+  * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* 5. Reveal PDF cover page header */
+  .pdf-cover {
+    display: block !important;
+    padding-bottom: 10mm;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.25);
+    margin-bottom: 8mm;
+  }
+
+  /* 6. Report layout — full-width block, no flex sidebar */
+  .report-layout {
+    display: block !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .report-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  /* 7. Uniform gap between sections on the same page */
+  .report-content > * + * {
+    margin-top: 8mm !important;
+  }
+
+  /* 8. Glass panels: keep Jadeer dark aesthetic but solid (no blur) */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.055) !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* 9. Force all sections/animations to be fully visible in print */
+  section,
+  [data-framer-component-type],
+  .report-content > section {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+    animation: none !important;
+  }
+
+  /* 10. Page breaks — major section groupings */
+  /* Page 1: pdf-cover + #overview  (no break needed — first page) */
+  /* Page 2: Why This Score + Score Breakdown */
+  #readiness    { break-before: page !important; padding-top: 6mm; }
+  /* Page 3: Business Model + SWOT */
+  #model        { break-before: page !important; padding-top: 6mm; }
+  /* Page 4: Market + Customer Persona */
+  #market       { break-before: page !important; padding-top: 6mm; }
+  /* Page 5: Risk Assessment */
+  #risk         { break-before: page !important; padding-top: 6mm; }
+  /* Page 6: Revenue + Go-to-Market */
+  #revenue      { break-before: page !important; padding-top: 6mm; }
+  /* Page 7: Competitive + Roadmap */
+  #competitive  { break-before: page !important; padding-top: 6mm; }
+  /* Page 8: Recommendations */
+  #recommendations { break-before: page !important; padding-top: 6mm; }
+
+  /* Sections that flow with the previous section (no page break) */
+  #metrics, #swot, #persona, #gtm, #roadmap {
+    break-before: avoid !important;
+  }
+
+  /* Headings stay with their content */
+  h2, h3, h4 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* 11. Risk section — stack radar chart and risk cards vertically */
+  #risk .grid {
+    grid-template-columns: 1fr !important;
+  }
+  #risk [class*="col-span"] {
+    grid-column: span 1 !important;
+  }
+
+  /* 12. Score breakdown — 3 columns instead of 6 for readability */
+  #metrics .grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  /* 13. Boost low-opacity text for legibility when printed */
+  [style*="rgba(255, 255, 255, 0.3"],
+  [style*="rgba(255, 255, 255, 0.4"],
+  [style*="rgba(255,255,255,0.3"],
+  [style*="rgba(255,255,255,0.4"] {
+    color: rgba(255, 255, 255, 0.65) !important;
+  }
+  [style*="rgba(255, 255, 255, 0.5"],
+  [style*="rgba(255, 255, 255, 0.6"],
+  [style*="rgba(255,255,255,0.5"],
+  [style*="rgba(255,255,255,0.6"] {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  /* 14. Recharts SVGs must not be clipped */
+  svg {
+    overflow: visible !important;
+  }
+
+  /* 15. No trailing blank page */
+  main > *:last-child {
+    page-break-after: avoid !important;
+  }
+}
+
+@layer theme, base, clerk, components, utilities;
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@clerk/themes/shadcn.css';
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-gold: hsl(var(--gold));
+  --color-gold-muted: hsl(var(--gold-muted));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+:root {
+  --background: 240 10% 3%;
+  --foreground: 0 0% 97%;
+
+  --card: 240 8% 5%;
+  --card-foreground: 0 0% 97%;
+  --card-border: 240 6% 13%;
+
+  --popover: 240 8% 6%;
+  --popover-foreground: 0 0% 97%;
+  --popover-border: 240 6% 14%;
+
+  --primary: 0 0% 100%;
+  --primary-foreground: 240 10% 3%;
+
+  --secondary: 240 6% 9%;
+  --secondary-foreground: 0 0% 85%;
+
+  --muted: 240 6% 10%;
+  --muted-foreground: 240 5% 58%;
+
+  --accent: 240 5% 14%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 240 6% 13%;
+  --input: 240 6% 13%;
+  --ring: 43 65% 55%;
+
+  /* Jadeer gold */
+  --gold: 43 62% 53%;
+  --gold-muted: 43 40% 35%;
+
+  --chart-1: 43 62% 53%;
+  --chart-2: 200 80% 60%;
+  --chart-3: 160 60% 50%;
+  --chart-4: 280 60% 60%;
+  --chart-5: 0 0% 60%;
+  /* ── Surface tokens (used via var(--_hdr) etc. in inline styles so they flip with theme) */
+  --_hdr:        rgba(7,7,12,0.88);
+  --_hdr-b:      rgba(255,255,255,0.05);
+  --_overlay:    rgba(10,10,18,0.97);
+  --_drawer:     rgba(7,7,12,0.97);
+  --_dropdown:   #0D0D18;
+  --_dropdown-b: rgba(255,255,255,0.09);
+}
+
+.dark {
+  --background: 240 10% 3%;
+  --foreground: 0 0% 97%;
+  --card: 240 8% 4%;
+  --card-foreground: 0 0% 97%;
+  --card-border: 240 6% 12%;
+  --popover: 240 8% 5%;
+  --popover-foreground: 0 0% 97%;
+  --popover-border: 240 6% 13%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 240 10% 3%;
+  --secondary: 240 6% 8%;
+  --secondary-foreground: 0 0% 80%;
+  --muted: 240 6% 9%;
+  --muted-foreground: 240 5% 55%;
+  --accent: 240 5% 13%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 240 6% 12%;
+  --input: 240 6% 12%;
+  --ring: 43 65% 55%;
+  --gold: 43 62% 53%;
+  --gold-muted: 43 40% 32%;
+  --_hdr:        rgba(7,7,12,0.88);
+  --_hdr-b:      rgba(255,255,255,0.05);
+  --_overlay:    rgba(10,10,18,0.97);
+  --_drawer:     rgba(7,7,12,0.97);
+  --_dropdown:   #0D0D18;
+  --_dropdown-b: rgba(255,255,255,0.09);
+}
+
+/* ── Light mode palette ──────────────────────────────────────────────────── */
+.light {
+  --background: 38 22% 95%;
+  --foreground: 240 35% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 35% 10%;
+  --card-border: 240 10% 86%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 35% 10%;
+  --popover-border: 240 10% 86%;
+  --primary: 240 35% 10%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 8% 92%;
+  --secondary-foreground: 240 35% 18%;
+  --muted: 240 8% 90%;
+  --muted-foreground: 240 10% 42%;
+  --accent: 240 8% 88%;
+  --accent-foreground: 240 35% 10%;
+  --destructive: 0 84% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 240 10% 86%;
+  --input: 240 8% 92%;
+  --ring: 43 65% 55%;
+  --gold: 43 62% 44%;
+  --gold-muted: 43 40% 60%;
+  --chart-1: 43 62% 44%;
+  --chart-2: 200 75% 42%;
+  --chart-3: 160 55% 38%;
+  --chart-4: 280 55% 48%;
+  --chart-5: 0 0% 38%;
+  --_hdr:        rgba(250,248,242,0.92);
+  --_hdr-b:      rgba(0,0,0,0.08);
+  --_overlay:    rgba(252,250,244,0.98);
+  --_drawer:     rgba(252,250,244,0.99);
+  --_dropdown:   #f8f6ef;
+  --_dropdown-b: rgba(0,0,0,0.09);
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    selection-color: rgba(201,168,76,0.3);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-white/80 to-white/50;
+  }
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #e8c97a 0%, #C9A84C 50%, #a8882e 100%);
+  }
+  .glass-panel {
+    @apply bg-white/[0.04] backdrop-blur-xl border border-white/[0.08];
+  }
+  .glass-panel-gold {
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.15);
+    backdrop-filter: blur(16px);
+  }
+  .gold-glow {
+    box-shadow: 0 0 30px rgba(201,168,76,0.12), 0 0 60px rgba(201,168,76,0.06);
+  }
+  .gold-glow-strong {
+    box-shadow: 0 0 20px rgba(201,168,76,0.25), 0 0 40px rgba(201,168,76,0.12);
+  }
+  .input-jadeer {
+    @apply w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/25 focus:outline-none focus:border-gold/50 focus:bg-white/[0.06] transition-all;
+  }
+  /* Cinematic text sequence */
+  .cinematic-text {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    filter: blur(6px);
+    transition: all 1.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .cinematic-text.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  .cinematic-text.exit {
+    opacity: 0;
+    transform: translateY(-12px) scale(1.02);
+    filter: blur(6px);
+  }
+}
+
+/* RTL */
+[dir="rtl"] { text-align: right; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.4); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+   Placed outside @layer so they cascade over Tailwind's layer utilities.
+   These flip every "white-on-dark" Tailwind class to "dark-on-light".
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Text colors ─────────────────────────────────────────────────────── */
+.light .text-white          { color: hsl(var(--foreground)); }
+.light .text-white\/90      { color: hsl(var(--foreground) / 0.9); }
+.light .text-white\/80      { color: hsl(var(--foreground) / 0.8); }
+.light .text-white\/75      { color: hsl(var(--foreground) / 0.75); }
+.light .text-white\/70      { color: hsl(var(--foreground) / 0.7); }
+.light .text-white\/65      { color: hsl(var(--foreground) / 0.65); }
+.light .text-white\/60      { color: hsl(var(--foreground) / 0.6); }
+.light .text-white\/55      { color: hsl(var(--foreground) / 0.55); }
+.light .text-white\/50      { color: hsl(var(--foreground) / 0.5); }
+.light .text-white\/45      { color: hsl(var(--foreground) / 0.45); }
+.light .text-white\/40      { color: hsl(var(--foreground) / 0.4); }
+.light .text-white\/35      { color: hsl(var(--foreground) / 0.35); }
+.light .text-white\/30      { color: hsl(var(--foreground) / 0.3); }
+.light .text-white\/25      { color: hsl(var(--foreground) / 0.25); }
+.light .text-white\/20      { color: hsl(var(--foreground) / 0.2); }
+.light .text-white\/15      { color: hsl(var(--foreground) / 0.15); }
+.light .text-white\/10      { color: hsl(var(--foreground) / 0.1); }
+
+/* ── Hover text ──────────────────────────────────────────────────────── */
+.light .hover\:text-white:hover    { color: hsl(var(--foreground)); }
+.light .hover\:text-white\/90:hover{ color: hsl(var(--foreground) / 0.9); }
+.light .hover\:text-white\/80:hover{ color: hsl(var(--foreground) / 0.8); }
+.light .hover\:text-white\/75:hover{ color: hsl(var(--foreground) / 0.75); }
+.light .hover\:text-white\/70:hover{ color: hsl(var(--foreground) / 0.7); }
+.light .hover\:text-white\/60:hover{ color: hsl(var(--foreground) / 0.6); }
+
+/* ── Backgrounds ─────────────────────────────────────────────────────── */
+.light .bg-white\/\[0\.02\]  { background-color: rgba(0,0,0,0.02); }
+.light .bg-white\/\[0\.035\] { background-color: rgba(0,0,0,0.025); }
+.light .bg-white\/\[0\.04\]  { background-color: rgba(0,0,0,0.04); }
+.light .bg-white\/\[0\.05\]  { background-color: rgba(0,0,0,0.05); }
+.light .bg-white\/\[0\.06\]  { background-color: rgba(0,0,0,0.06); }
+.light .bg-white\/\[0\.07\]  { background-color: rgba(0,0,0,0.07); }
+.light .bg-white\/\[0\.08\]  { background-color: rgba(0,0,0,0.08); }
+.light .bg-white\/5          { background-color: rgba(0,0,0,0.05); }
+.light .bg-white\/8          { background-color: rgba(0,0,0,0.08); }
+.light .bg-white\/10         { background-color: rgba(0,0,0,0.1); }
+
+/* ── Hover backgrounds ───────────────────────────────────────────────── */
+.light .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(0,0,0,0.04); }
+.light .hover\:bg-white\/\[0\.05\]:hover { background-color: rgba(0,0,0,0.05); }
+.light .hover\:bg-white\/\[0\.07\]:hover { background-color: rgba(0,0,0,0.07); }
+.light .hover\:bg-white\/\[0\.08\]:hover { background-color: rgba(0,0,0,0.08); }
+.light .hover\:bg-white\/8:hover  { background-color: rgba(0,0,0,0.08); }
+.light .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.1); }
+
+/* ── Focus backgrounds ───────────────────────────────────────────────── */
+.light .focus\:bg-white\/\[0\.06\]:focus { background-color: rgba(0,0,0,0.06); }
+
+/* ── Borders ─────────────────────────────────────────────────────────── */
+.light .border-white\/\[0\.04\] { border-color: rgba(0,0,0,0.06); }
+.light .border-white\/\[0\.05\] { border-color: rgba(0,0,0,0.07); }
+.light .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.08); }
+.light .border-white\/\[0\.07\] { border-color: rgba(0,0,0,0.09); }
+.light .border-white\/\[0\.08\] { border-color: rgba(0,0,0,0.1); }
+.light .border-white\/\[0\.09\] { border-color: rgba(0,0,0,0.11); }
+.light .border-white\/10        { border-color: rgba(0,0,0,0.12); }
+.light .border-white\/20        { border-color: rgba(0,0,0,0.2); }
+.light .border-white\/5         { border-color: rgba(0,0,0,0.06); }
+
+/* ── Focus borders ───────────────────────────────────────────────────── */
+.light .focus\:border-white\/20:focus { border-color: rgba(0,0,0,0.2); }
+
+/* ── Utility component overrides ─────────────────────────────────────── */
+.light .glass-panel {
+  background: rgba(255,255,255,0.88);
+  border-color: rgba(0,0,0,0.08);
+  box-shadow: 0 1px 10px rgba(0,0,0,0.06);
+}
+
+.light .input-jadeer {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.1);
+  color: hsl(var(--foreground));
+}
+.light .input-jadeer::placeholder { color: hsl(var(--foreground) / 0.28); }
+.light .input-jadeer:focus         { background: rgba(0,0,0,0.06); }
+
+.light .text-gradient {
+  background-image: linear-gradient(135deg,
+    hsl(var(--foreground)) 0%,
+    hsl(var(--foreground) / 0.65) 100%);
+}
+
+/* ── RTL logical property helpers ────────────────────────────────────── */
+[dir="rtl"] .rtl\:flex-row-reverse { flex-direction: row-reverse; }
+[dir="rtl"] .rtl\:rotate-180       { transform: rotate(180deg); }
+
+/* ── Clerk overrides ─────────────────────────────────────────────────── */
+@layer clerk {
+  /* Hide "Development mode" badge — selectors handled outside layer for max priority */
+
+  /* Remove the outer card box decoration — we supply our own wrapper */
+  .cl-rootBox { width: 100% !important; }
+  .cl-cardBox {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Form inputs — dark, legible */
+  .cl-formFieldInput {
+    background: rgba(255,255,255,0.06) !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    color: #fff !important;
+  }
+  .cl-formFieldInput:focus {
+    background: rgba(255,255,255,0.09) !important;
+    border-color: rgba(255,255,255,0.25) !important;
+  }
+  .cl-formFieldInput::placeholder { color: rgba(255,255,255,0.28) !important; }
+
+  /* Labels */
+  .cl-formFieldLabel { color: rgba(255,255,255,0.75) !important; }
+
+  /* Primary button */
+  .cl-formButtonPrimary {
+    background: #C9A84C !important;
+    color: #07070C !important;
+    font-weight: 600 !important;
+  }
+  .cl-formButtonPrimary:hover { opacity: 0.88 !important; }
+
+  /* Social buttons */
+  .cl-socialButtonsBlockButton {
+    background: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+    color: rgba(255,255,255,0.8) !important;
+  }
+  .cl-socialButtonsBlockButton:hover {
+    background: rgba(255,255,255,0.09) !important;
+    color: #fff !important;
+  }
+}
+
+/* ── Hide Clerk "Development mode" badge (outside @layer for max priority) */
+[data-localization-key="badge__devMode"],
+.cl-badge__devMode,
+.cl-internal-b3fm6y,
+.cl-devModeWarning,
+a[data-localization-key="badge__devMode"] { display: none !important; }
+
+/* ── Light scrollbar ─────────────────────────────────────────────────── */
+.light ::-webkit-scrollbar-thumb       { background: rgba(0,0,0,0.15); }
+.light ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
