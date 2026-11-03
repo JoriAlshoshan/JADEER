@@ -20,7 +20,15 @@ JADEER was built using **Replit Agent** for AI-assisted development and integrat
 
 Unlike Jadwa AI, which combines Machine Learning and Generative AI, JADEER uses **LLM-based analysis** without a separately trained ML model.
 
-**Technologies:** Replit, OpenAI API, Generative AI, Agentic AI, Prompt Engineering, React, TypeScript, Node.js.
+## Technologies Used
+
+- **Development Platform:** Replit, Replit Agent
+- **Frontend:** React, TypeScript, Tailwind CSS
+- **Backend:** Node.js, TypeScript
+- **AI Integration:** OpenAI API
+- **AI Technologies:** Generative AI, Agentic AI, Prompt Engineering
+- **Hosting & Deployment:** Replit
+- **Version Control:** Git, GitHub
 
 ## Hackathon Recognition
 
