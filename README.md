@@ -22,8 +22,6 @@ Unlike Jadwa AI, which combines Machine Learning and Generative AI, JADEER uses 
 
 ## Technologies Used
 
-## Technologies Used
-
 - **Development Platform:** Replit, Replit Agent
 - **Frontend:** React, TypeScript
 - **Backend:** Node.js, Express.js, TypeScript
